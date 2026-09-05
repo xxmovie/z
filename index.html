@@ -80,6 +80,54 @@
             display: block;
         }
 
+        /* Video Meta Info (Durasi & Views) */
+        .meta-info {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            right: 8px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none; /* Agar klik tetap menembus ke movie-card */
+        }
+
+        .meta-badge {
+            background-color: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        /* Ikon Play Melayang untuk video yang tidak auto-play */
+        .play-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 48px;
+            height: 48px;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            backdrop-filter: blur(2px);
+        }
+
+        .play-overlay svg {
+            width: 24px;
+            height: 24px;
+            fill: #fff;
+            margin-left: 4px; /* Untuk menyeimbangkan ikon segitiga play */
+        }
+
         /* Loading State */
         .loading-text {
             text-align: center;
@@ -90,7 +138,7 @@
 
         /* Responsive Design */
         @media (max-width: 768px) {
-            .grid { gap: 4px; }
+            .grid { gap: 6px; }
             .header-title { font-size: 1.2rem; }
         }
     </style>
@@ -203,6 +251,28 @@
             }
         }
 
+        // Fungsi Generate Angka Random untuk Durasi dan Views
+        function generateRandomMeta() {
+            // Durasi (Acak 20 sampai 50 Menit)
+            const minutes = Math.floor(Math.random() * 31) + 20; 
+            const seconds = Math.floor(Math.random() * 60).toString().padStart(2, '0');
+            const duration = `${minutes}:${seconds}`;
+
+            // Views (Acak mulai dari 500 sampai ke jutaan)
+            const rawViews = Math.floor(Math.random() * 899500) + 500;
+            // Format agar menjadi K (Ribuan) atau M (Jutaan) jika angkanya besar
+            let formattedViews = "";
+            if (rawViews >= 1000000) {
+                formattedViews = (rawViews / 1000000).toFixed(1) + 'M';
+            } else if (rawViews >= 1000) {
+                formattedViews = (rawViews / 1000).toFixed(1) + 'K';
+            } else {
+                formattedViews = rawViews;
+            }
+
+            return { duration, views: `${formattedViews} Views` };
+        }
+
         // Script Merender Video dari Array ke Grid
         function loadVideosToGrid() {
             const grid = document.getElementById('movie-grid');
@@ -216,18 +286,41 @@
                 card.className = 'movie-card';
                 card.onclick = redirectToOffer;
                 
+                // Ambil data acak durasi dan views
+                const meta = generateRandomMeta();
+                let videoElement = "";
+                let playIconElement = "";
+
                 if (index === 0) {
                     // Konten pertama: Autoplay, loop, muted
-                    card.innerHTML = `
-                        <video src="${videoUrl}" autoplay loop muted playsinline loading="lazy"></video>
-                    `;
+                    videoElement = `<video src="${videoUrl}" autoplay loop muted playsinline loading="lazy"></video>`;
                 } else {
-                    // Konten lainnya: Hanya thumbnail (Tanpa autoplay)
-                    // Sisipan #t=0.1 berfungsi memberitahu browser untuk langsung me-load frame pertama video sebagai poster
-                    card.innerHTML = `
-                        <video src="${videoUrl}#t=0.1" muted playsinline preload="metadata"></video>
+                    // Konten lainnya: Hanya thumbnail (Tanpa autoplay) dengan ikon play di tengah
+                    videoElement = `<video src="${videoUrl}#t=0.1" muted playsinline preload="metadata"></video>`;
+                    playIconElement = `
+                        <div class="play-overlay">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M8 5v14l11-7z"/>
+                            </svg>
+                        </div>
                     `;
                 }
+                
+                // Rakit komponen card HTML
+                card.innerHTML = `
+                    ${videoElement}
+                    ${playIconElement}
+                    <div class="meta-info">
+                        <div class="meta-badge">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            ${meta.views}
+                        </div>
+                        <div class="meta-badge">${meta.duration}</div>
+                    </div>
+                `;
                 
                 grid.appendChild(card);
             });
