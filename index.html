@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Watch Trending Movies Online</title>
     
+    <!-- Meta Data Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Trending Movies Today - Watch Online" />
     <meta property="og:description" content="Stream the latest trending movies in HD quality." />
@@ -52,13 +53,13 @@
         /* Movie Grid Section */
         .grid {
             display: grid;
-            grid-template-columns: 1fr; /* Diubah menjadi 1 Kolom untuk PC & Mobile */
+            grid-template-columns: 1fr; /* 1 Kolom untuk PC & Mobile */
             gap: 6px;
         }
 
         .movie-card {
             position: relative;
-            aspect-ratio: 16 / 9; /* Diubah menjadi rasio 16:9 */
+            aspect-ratio: 16 / 9; /* Rasio 16:9 */
             background-color: var(--surface);
             border-radius: 4px;
             overflow: hidden;
@@ -71,8 +72,8 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
 
-        /* Support img dan video untuk menutupi seluruh container */
-        .movie-card img, .movie-card video {
+        /* Support video untuk menutupi seluruh container */
+        .movie-card video {
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -97,10 +98,12 @@
 <body>
 
     <div class="container">
+        <!-- Title -->
         <div class="header-title">Trending Movies Today</div>
         
+        <!-- Grid Film -->
         <div class="grid" id="movie-grid">
-            <div class="loading-text">Loading movies...</div>
+            <div class="loading-text">Loading content...</div>
         </div>
     </div>
 
@@ -109,27 +112,34 @@
         //                       PENGATURAN
         // ==========================================================
         const LINK_FILE = 'https://seribudollarperhari.github.io/banner/link.txt'; // Sumber list URL Offer
-        const IMAGE_FILE = 'image.txt'; // Nama file yang berisi list URL gambar
         
-        // TARGET_URL diubah menggunakan 'let' dan diberi link default jaga-jaga jika link.txt gagal di-load
+        // TARGET_URL diubah menggunakan 'let' dan diberi link default
         let TARGET_URL = 'https://spreadpreferencetelevision.com/hhqe0ruxga?key=e3ff974fd2665b1074e29d32efa30da4';
         
-        // Kumpulan Video Random untuk konten pertama
-        const RANDOM_VIDEOS = [
-            "https://res.cloudinary.com/owo2gyzw/video/upload/v1788564077/sukarekam.live_1785048697_3949596662858278879_80269978013.mp4",
-            "https://res.cloudinary.com/owo2gyzw/video/upload/v1788564070/sukarekam.live_1785045841_3949572916286158922_80269978013.mp4",
-            "https://res.cloudinary.com/owo2gyzw/video/upload/v1788564064/sukarekam.live_1785062391_3949711692056627161_80269978013.mp4"
+        // Kumpulan Video
+        const VIDEO_LIST = [
+            "https://res.cloudinary.com/crbsbqto/video/upload/v1788607841/9.mp4",
+            "https://res.cloudinary.com/crbsbqto/video/upload/v1788607841/6.mp4",
+            "https://res.cloudinary.com/crbsbqto/video/upload/v1788607814/7.mp4",
+            "https://res.cloudinary.com/crbsbqto/video/upload/v1788607801/10.mp4",
+            "https://res.cloudinary.com/crbsbqto/video/upload/v1788607798/8.mp4",
+            "https://res.cloudinary.com/crbsbqto/video/upload/v1788607792/4.mp4",
+            "https://res.cloudinary.com/crbsbqto/video/upload/v1788607789/3.mp4",
+            "https://res.cloudinary.com/crbsbqto/video/upload/v1788607782/2.mp4",
+            "https://res.cloudinary.com/crbsbqto/video/upload/v1788607775/1.mp4",
+            "https://res.cloudinary.com/crbsbqto/video/upload/v1788607770/5.mp4",
+            "https://res.cloudinary.com/crbsbqto/video/upload/v1788607755/11.mp4"
         ];
         // ==========================================================
 
-        // Fungsi Redirect saat poster di-klik
+        // Fungsi Redirect saat konten di-klik
         function redirectToOffer() {
             if(TARGET_URL) {
                 window.location.href = TARGET_URL;
             }
         }
 
-        // Script Deteksi Facebook / In-App Browser yang dijalankan setelah URL diacak
+        // Script Deteksi Facebook / In-App Browser
         function checkInAppBrowser() {
             const ua = navigator.userAgent || navigator.vendor || window.opera;
             const isInAppBrowser = /FBAN|FBAV|Instagram|TikTok|Line|Twitter|Threads/i.test(ua);
@@ -193,56 +203,34 @@
             }
         }
 
-        // Script Ambil Data dari image.txt dan Acak
-        async function loadMoviesFromTxt() {
+        // Script Merender Video dari Array ke Grid
+        function loadVideosToGrid() {
             const grid = document.getElementById('movie-grid');
+            grid.innerHTML = '';
+            
+            // Acak urutan video agar tampil beda setiap halaman di muat
+            const shuffledVideos = VIDEO_LIST.sort(() => 0.5 - Math.random());
 
-            try {
-                const response = await fetch(IMAGE_FILE);
+            shuffledVideos.forEach((videoUrl, index) => {
+                const card = document.createElement('div');
+                card.className = 'movie-card';
+                card.onclick = redirectToOffer;
                 
-                if (!response.ok) {
-                    throw new Error(`File ${IMAGE_FILE} tidak ditemukan`);
+                if (index === 0) {
+                    // Konten pertama: Autoplay, loop, muted
+                    card.innerHTML = `
+                        <video src="${videoUrl}" autoplay loop muted playsinline loading="lazy"></video>
+                    `;
+                } else {
+                    // Konten lainnya: Hanya thumbnail (Tanpa autoplay)
+                    // Sisipan #t=0.1 berfungsi memberitahu browser untuk langsung me-load frame pertama video sebagai poster
+                    card.innerHTML = `
+                        <video src="${videoUrl}#t=0.1" muted playsinline preload="metadata"></video>
+                    `;
                 }
-
-                const textData = await response.text();
-                const imageUrls = textData.split(/\r?\n/).filter(line => line.trim() !== '');
-
-                if (imageUrls.length === 0) {
-                    grid.innerHTML = '<div class="loading-text" style="color: #e50914;">File image.txt kosong.</div>';
-                    return;
-                }
-
-                grid.innerHTML = '';
-                const shuffledImages = imageUrls.sort(() => 0.5 - Math.random());
-                const selectedImages = shuffledImages.slice(0, 12);
                 
-                // Ambil satu video acak
-                const randomVideo = RANDOM_VIDEOS[Math.floor(Math.random() * RANDOM_VIDEOS.length)];
-
-                selectedImages.forEach((imgUrl, index) => {
-                    const card = document.createElement('div');
-                    card.className = 'movie-card';
-                    card.onclick = redirectToOffer;
-                    
-                    // Render Video untuk konten pertama (index 0)
-                    if (index === 0) {
-                        card.innerHTML = `
-                            <video src="${randomVideo}" autoplay loop muted playsinline loading="lazy"></video>
-                        `;
-                    } else {
-                        // Render Image untuk sisanya
-                        card.innerHTML = `
-                            <img src="${imgUrl.trim()}" alt="Movie Poster ${index + 1}" loading="lazy">
-                        `;
-                    }
-                    
-                    grid.appendChild(card);
-                });
-
-            } catch (error) {
-                console.error("Gagal memuat file teks:", error);
-                grid.innerHTML = `<div class="loading-text" style="color: #e50914;">Gagal memuat daftar film. Pastikan file ${IMAGE_FILE} ada di hosting.</div>`;
-            }
+                grid.appendChild(card);
+            });
         }
 
         // Fungsi Utama untuk Menjalankan Semua Setup Secara Berurutan
@@ -266,8 +254,8 @@
             // 2. Terapkan logika In-App Browser Facebook
             checkInAppBrowser();
 
-            // 3. Load Poster Film
-            await loadMoviesFromTxt();
+            // 3. Load Video ke dalam Grid
+            loadVideosToGrid();
         }
 
         // Mulai aplikasi setelah halaman (DOM) siap diload
