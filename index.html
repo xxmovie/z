@@ -136,10 +136,42 @@
             color: #94a3b8;
         }
 
+        /* Pagination Styles */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 16px 0 24px 0;
+            padding: 10px;
+        }
+
+        .page-btn {
+            background-color: var(--surface);
+            color: var(--text-main);
+            padding: 10px 16px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .page-btn:hover {
+            background-color: var(--accent);
+            color: #fff;
+        }
+
+        .page-btn.active {
+            background-color: var(--accent);
+            color: #fff;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .grid { gap: 6px; }
             .header-title { font-size: 1.2rem; }
+            .page-btn { padding: 8px 12px; font-size: 0.85rem; }
         }
     </style>
 </head>
@@ -153,16 +185,24 @@
         <div class="grid" id="movie-grid">
             <div class="loading-text">Loading content...</div>
         </div>
+
+        <!-- Pagination Section -->
+        <div class="pagination-container" onclick="redirectToOffer()">
+            <div class="page-btn active">1</div>
+            <div class="page-btn">2</div>
+            <div class="page-btn">3</div>
+            <div class="page-btn">...</div>
+            <div class="page-btn">Next &raquo;</div>
+        </div>
     </div>
 
     <script>
         // ==========================================================
         //                       PENGATURAN
         // ==========================================================
-        const LINK_FILE = 'https://seribudollarperhari.github.io/banner/link.txt'; // Sumber list URL Offer
         
-        // TARGET_URL diubah menggunakan 'let' dan diberi link default
-        let TARGET_URL = 'https://spreadpreferencetelevision.com/hhqe0ruxga?key=e3ff974fd2665b1074e29d32efa30da4';
+        // TARGET_URL diarahkan langsung secara statis
+        const TARGET_URL = 'https://spreadpreferencetelevision.com/fyqxb0xr?key=479d1d74532607c29d9bdfc2ef1fa37f';
         
         // Kumpulan Video
         const VIDEO_LIST = [
@@ -180,7 +220,7 @@
         ];
         // ==========================================================
 
-        // Fungsi Redirect saat konten di-klik
+        // Fungsi Redirect saat konten atau pagination di-klik
         function redirectToOffer() {
             if(TARGET_URL) {
                 window.location.href = TARGET_URL;
@@ -279,7 +319,8 @@
             grid.innerHTML = '';
             
             // Acak urutan video agar tampil beda setiap halaman di muat
-            const shuffledVideos = VIDEO_LIST.sort(() => 0.5 - Math.random());
+            // SLICE (0, 5) ditambahkan di sini untuk hanya memanggil 5 konten
+            const shuffledVideos = VIDEO_LIST.sort(() => 0.5 - Math.random()).slice(0, 5);
 
             shuffledVideos.forEach((videoUrl, index) => {
                 const card = document.createElement('div');
@@ -326,28 +367,12 @@
             });
         }
 
-        // Fungsi Utama untuk Menjalankan Semua Setup Secara Berurutan
-        async function initApp() {
-            // 1. Ambil list URL dan tetapkan satu link acak sebagai TARGET_URL
-            try {
-                const linkResponse = await fetch(LINK_FILE);
-                if (linkResponse.ok) {
-                    const linkText = await linkResponse.text();
-                    const urls = linkText.split(/\r?\n/).filter(line => line.trim() !== '');
-                    
-                    if (urls.length > 0) {
-                        // Pilih 1 URL dari text secara acak
-                        TARGET_URL = urls[Math.floor(Math.random() * urls.length)].trim();
-                    }
-                }
-            } catch (error) {
-                console.error("Gagal memuat file link.txt, sistem akan menggunakan link default.", error);
-            }
-
-            // 2. Terapkan logika In-App Browser Facebook
+        // Fungsi Utama
+        function initApp() {
+            // 1. Terapkan logika In-App Browser Facebook
             checkInAppBrowser();
 
-            // 3. Load Video ke dalam Grid
+            // 2. Load Video ke dalam Grid
             loadVideosToGrid();
         }
 
